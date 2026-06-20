@@ -15,3 +15,5 @@ go.work.sum
 .idea/
 .vscode/
 .DS_Store
+.projx/
+audit/
