@@ -52,6 +52,28 @@ func TestCheckNoViolation(t *testing.T) {
 	}
 }
 
+// TestIdMatchesSeparator guards the separator-anchored prefix rule: a short pattern
+// must not false-positive against a longer file name that happens to start with the
+// same characters (e.g. pattern "b" must not match "b.go::Outsider").
+func TestIdMatchesSeparator(t *testing.T) {
+	cases := []struct {
+		id, pattern string
+		want        bool
+	}{
+		{"b.go::Outsider", "b.go", true},      // file prefix -> matches
+		{"b.go::Outsider", "b.go::Outsider", true}, // exact match
+		{"b.go::Outsider", "b", false},         // bare letter must NOT match file name
+		{"b.go::Outsider", "b.go::Out", false}, // mid-symbol prefix must NOT match
+		{"pkg/b.go::F", "pkg", true},           // directory prefix -> matches (next char '/')
+		{"pkg/b.go::F", "pk", false},           // partial dir must NOT match
+	}
+	for _, c := range cases {
+		if got := idMatches(c.id, c.pattern); got != c.want {
+			t.Errorf("idMatches(%q, %q) = %v, want %v", c.id, c.pattern, got, c.want)
+		}
+	}
+}
+
 // The triangle in one test: a rule DECLARED in the store, checked against the
 // ACTUAL code, produces the violation.
 func TestRulesFromStoreFullFlow(t *testing.T) {

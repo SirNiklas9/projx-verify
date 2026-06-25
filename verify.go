@@ -44,10 +44,19 @@ func Check(rules []Rule, p *core.Project) []Violation {
 
 // idMatches reports whether a stable ID is covered by a rule pattern: an exact
 // match, or the ID sits under the pattern as a prefix (so a file/module pattern
-// catches every symbol within it).
+// catches every symbol within it). Prefix matching requires the next character to
+// be a separator ("/" for directory boundaries, ":" for the "::" file::symbol
+// boundary) so that a pattern "auth" does not accidentally match "auth_test.go".
 func idMatches(id, pattern string) bool {
 	if pattern == "" {
 		return false
 	}
-	return id == pattern || strings.HasPrefix(id, pattern)
+	if id == pattern {
+		return true
+	}
+	if !strings.HasPrefix(id, pattern) {
+		return false
+	}
+	next := id[len(pattern)]
+	return next == '/' || next == ':'
 }
